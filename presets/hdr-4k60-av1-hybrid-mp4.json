@@ -1,0 +1,45 @@
+{
+  "id": "hdr-4k60-av1-hybrid-mp4",
+  "displayName": "HDR 4K60 AV1 Hybrid MP4",
+  "description": "Native OBS Hybrid MP4 output with RTX 40-series NVENC AV1 for high-quality, recoverable 10-bit Rec.2100 PQ recording.",
+  "parameters": [
+    { "category": "Output", "name": "Mode", "value": "Advanced" },
+    { "category": "Video", "name": "ColorFormat", "value": "P010" },
+    { "category": "Video", "name": "ColorSpace", "value": "2100PQ" },
+    { "category": "Video", "name": "ColorRange", "value": "Partial" },
+    { "category": "Video", "name": "SdrWhiteLevel", "value": "300" },
+    { "category": "Video", "name": "HdrNominalPeakLevel", "value": "1000" },
+    { "category": "AdvOut", "name": "RecType", "value": "Standard" },
+    { "category": "AdvOut", "name": "RecFormat2", "value": "hybrid_mp4" },
+    { "category": "AdvOut", "name": "RecEncoder", "value": "obs_nvenc_av1_tex" },
+    { "category": "AdvOut", "name": "RecUseRescale", "value": "false" }
+  ],
+  "video": {
+    "baseWidth": 3840,
+    "baseHeight": 2160,
+    "outputWidth": 3840,
+    "outputHeight": 2160,
+    "fpsNumerator": 60,
+    "fpsDenominator": 1
+  },
+  "encoderPolicy": {
+    "mode": "standard",
+    "acceptedEncoderIds": ["obs_nvenc_av1_tex", "obs_nvenc_av1"],
+    "container": "hybrid_mp4",
+    "rateControl": "CQP",
+    "cqpMaximum": 20,
+    "keyframeSeconds": 2,
+    "multipass": "disabled"
+  },
+  "expectedProbe": {
+    "codec": "av1",
+    "width": 3840,
+    "height": 2160,
+    "fps": 60,
+    "bitDepth": 10,
+    "colorRange": "tv",
+    "colorSpace": "bt2020nc",
+    "colorTransfer": "smpte2084",
+    "colorPrimaries": "bt2020"
+  }
+}

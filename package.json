@@ -1,0 +1,65 @@
+{
+  "name": "@avalonreset/legends-obs-kit",
+  "version": "0.4.0",
+  "description": "Guarded, agent-first control and proof for OBS Studio on Windows.",
+  "license": "MIT",
+  "author": "Avalon Reset contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/avalonreset/legends-obs-kit.git"
+  },
+  "homepage": "https://github.com/avalonreset/legends-obs-kit#readme",
+  "bugs": {
+    "url": "https://github.com/avalonreset/legends-obs-kit/issues"
+  },
+  "keywords": [
+    "obs-studio",
+    "obs-websocket",
+    "agent-skill",
+    "automation",
+    "recording"
+  ],
+  "type": "module",
+  "bin": {
+    "legends-obs-kit": "./dist/index.js",
+    "lobs": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "docs",
+    "presets/hdr-4k60-av1-balanced.json",
+    "presets/hdr-4k60-av1-hybrid-mp4.json",
+    "skills",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CLAUDE.md",
+    "CODEX.md",
+    "CONTRIBUTING.md",
+    "GEMINI.md",
+    "GROK.md",
+    "LICENSE",
+    "LEGENDS.md",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "node --import tsx --test test/*.test.ts",
+    "pack:check": "node scripts/check-package-contents.mjs",
+    "release:check": "node scripts/check-packed-release.mjs",
+    "prepack": "pnpm build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.0"
+  },
+  "packageManager": "pnpm@10.33.0"
+}

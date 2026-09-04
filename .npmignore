@@ -1,0 +1,11 @@
+.codex-tmp/
+.legends-obs-kit/
+.env
+.env.*
+node_modules/
+scripts/Occupancy-Claim-OBS.ps1
+scripts/bind-cursor-origin.ts
+scripts/fix-nvenc-now.ps1
+scripts/save-source-screenshot.ts
+scripts/wire-kick-native-stream.ts
+presets/hdr-4k60-av1-ffmpeg-resilient.json

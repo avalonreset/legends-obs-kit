@@ -1,0 +1,83 @@
+import { CLI_NAME, DEFAULT_PRESET_ID, DISPLAY_NAME, VERSION } from "./identity.js";
+import type { JsonObject } from "./types.js";
+
+export function buildManifest(): JsonObject {
+  return {
+    name: DISPLAY_NAME,
+    cli: CLI_NAME,
+    version: VERSION,
+    spine: "OBS WebSocket v5 plus local OBS profile/FFprobe inventory and a hardware-specific settings ledger",
+    ambientMcp: false,
+    bundledReferencePreset: DEFAULT_PRESET_ID,
+    presetPolicy: "Reference only; never apply or canary without an explicit --preset chosen for the user's hardware and outcome.",
+    commands: [
+      { command: "doctor", mutation: false, purpose: "Hard-gate local OBS WebSocket control and report optional recording, audio, encoder, FFprobe, and profile capabilities." },
+      { command: "manifest", mutation: false, purpose: "Machine-readable capability map." },
+      { command: "agent:context", mutation: false, purpose: "Compact operating contract for agents." },
+      { command: "status", mutation: false, purpose: "Live OBS version, output activity, profile, and performance." },
+      { command: "inventory", mutation: false, purpose: "Privacy-minimized machine/profile/scene/input/output summary; --full enables local diagnostics." },
+      { command: "audio:status", mutation: false, purpose: "Verify the primary Mic/Aux endpoint; --include-devices shows local endpoint details." },
+      { command: "audio:plan", mutation: false, purpose: "Resolve an exact audio endpoint and preview the binding change." },
+      { command: "audio:bind", mutation: true, purpose: "Guarded, idle-only audio endpoint binding with ledger audits, readback, and rollback receipt." },
+      { command: "audit:status", mutation: false, purpose: "Offline latest and last-known-good ledger pointers for every audited machine." },
+      { command: "audit:capture", mutation: false, purpose: "Persist a redacted hardware, capability, and exact current-settings audit without changing OBS." },
+      { command: "audit:show", mutation: false, purpose: "Read the recorded latest or last-known-good decision surface without requiring live OBS." },
+      { command: "audit:diff", mutation: false, purpose: "Compare live OBS against latest or last-known-good and return exact drift paths." },
+      { command: "audit:verify", mutation: false, purpose: "Parse, secret-scan, and hash-verify every local audit and pointer." },
+      { command: "profile:show", mutation: false, purpose: "Current profile and safe encoder settings." },
+      { command: "profile:plan", mutation: false, purpose: "Exact diff against the selected preset." },
+      { command: "profile:backup", mutation: false, purpose: "Write a redacted rollback snapshot." },
+      { command: "profile:apply", mutation: true, purpose: "Transactional preset apply with automatic backup and readback." },
+      { command: "profile:refresh", mutation: true, purpose: "Rebuild the active OBS video pipeline from the already-applied profile." },
+      { command: "profile:rollback", mutation: true, purpose: "Restore a named snapshot to the matching current profile." },
+      { command: "record:status", mutation: false, purpose: "Read recording state." },
+      { command: "record:start", mutation: true, purpose: "Start local recording after explicit live confirmation." },
+      { command: "record:stop", mutation: true, purpose: "Stop local recording after explicit live confirmation." },
+      { command: "record:canary", mutation: true, purpose: "Bounded local recording plus FFprobe, OBS-log, and frame-drop proof." },
+      { command: "receipts:list", mutation: false, purpose: "List local redacted receipts." },
+      { command: "receipts:verify", mutation: false, purpose: "Parse and secret-scan local receipts." },
+      { command: "vision-switch:scene-plan", mutation: false, purpose: "Propose panel-ab / panel-cd scene graph; honest pixels (no stretch default; Option A GO)." },
+      { command: "vision-switch:scene-apply", mutation: true, purpose: "Guarded scene graph apply: dry plan by default; renames-only live with --confirm --go; create is human checklist." },
+      { command: "vision-switch:status", mutation: false, purpose: "Arm/freeze state, last panel/pair, optional Shell sample and live program scene." },
+      { command: "vision-switch:plan", mutation: false, purpose: "Dry plan: Shell Get-ActivePanel → pair → target scene (no WS mutation)." },
+      { command: "vision-switch:arm", mutation: false, purpose: "Persist armed=true (cuts still require live dry-run off + --confirm)." },
+      { command: "vision-switch:disarm", mutation: false, purpose: "Persist armed=false (default safety)." },
+      { command: "vision-switch:freeze", mutation: false, purpose: "Freeze auto-cuts (canary / operator hold)." },
+      { command: "vision-switch:unfreeze", mutation: false, purpose: "Clear freeze flag." },
+      { command: "vision-switch:tick", mutation: true, purpose: "One sample + optional SetCurrentProgramScene when armed and confirmed live." },
+      { command: "vision-switch:daemon", mutation: true, purpose: "Poll loop: Shell → plan → optional cut. Default dry/disarmed; --max-ticks or --forever." },
+    ],
+    mutationContract: {
+      defaultDryRun: true,
+      liveEnvironment: "LEGENDS_OBS_DRY_RUN=false",
+      confirmationFlag: "--confirm",
+      explicitPreset: "profile:show, profile:plan, profile:backup, profile:apply, profile:refresh, and record:canary require --preset <id>",
+      optionalPrimaryMicrophoneGate: "Use --require-microphone or LEGENDS_OBS_REQUIRE_PRIMARY_MICROPHONE=true when audio capture is mandatory",
+      outputGuard: "profile and audio changes refuse while recording, streaming, replay buffer, or virtual camera is active",
+      rollback: "profile apply creates a snapshot before its first write",
+      ledger: "profile mutations capture before/after observations; only a passing canary advances last-known-good",
+    },
+  };
+}
+export function buildAgentContext(): JsonObject {
+  return {
+    kit: DISPLAY_NAME,
+    firstCommand: "lobs doctor --pretty",
+    operatingOrder: ["doctor", "audit:status and audit:diff", "status or inventory", "plan", "backup", "one confirmed mutation", "readback", "canary", "receipt verification"],
+    optionalReferencePresetRecipe: [
+      "lobs profile:plan --preset hdr-4k60-av1-hybrid-mp4 --pretty",
+      "lobs audit:capture --reason pre-preset-baseline --pretty",
+      "$env:LEGENDS_OBS_DRY_RUN='false'; lobs profile:apply --preset hdr-4k60-av1-hybrid-mp4 --confirm --pretty",
+      "$env:LEGENDS_OBS_DRY_RUN='false'; lobs record:canary --preset hdr-4k60-av1-hybrid-mp4 --seconds 8 --confirm --pretty",
+      "$env:LEGENDS_OBS_DRY_RUN='true'; lobs receipts:verify --pretty",
+    ],
+    invariants: [
+      "Never print or copy the OBS WebSocket password.",
+      "Never stream as part of a canary.",
+      "Never mutate a profile while any output is active.",
+      "A claimed recording works only after FFprobe and OBS-log verification.",
+      "Latest means last observed; last-known-good advances only after a passing canary.",
+      "No ambient MCP fallback.",
+    ],
+  };
+}
