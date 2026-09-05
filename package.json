@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git+https://github.com/avalonreset/legends-obs-kit.git"
   },
-  "homepage": "https://github.com/avalonreset/legends-obs-kit#readme",
+  "homepage": "https://cto-legends.com",
   "bugs": {
     "url": "https://github.com/avalonreset/legends-obs-kit/issues"
   },
@@ -28,6 +28,7 @@
     "dist",
     "bin",
     "docs",
+    "assets/banner.webp",
     "presets/hdr-4k60-av1-balanced.json",
     "presets/hdr-4k60-av1-hybrid-mp4.json",
     "skills",

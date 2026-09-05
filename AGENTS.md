@@ -1,4 +1,4 @@
-# Legends OBS Kit — agent instructions
+# legends-obs-kit — agent instructions
 
 1. Read `LEGENDS.md` and `skills/legends-obs-kit/SKILL.md`.
 2. Resolve the CLI as documented in the skill, then run `doctor --pretty`, `manifest --pretty`, and `agent:context --pretty`. In a cloned or extracted release, the universal invocation is `node .\dist\index.js <command>`; a global install also provides `lobs`.

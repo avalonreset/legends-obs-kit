@@ -3,7 +3,7 @@ name: legends-obs-kit
 description: Inspect, configure, operate, and battle-test OBS Studio on Windows through a guarded CLI. Use for OBS setup, scenes and sources, recording, audio endpoints, encoder/HDR capability checks, settings drift, rollback, and local recording proof.
 ---
 
-# Legends OBS Kit
+# legends-obs-kit
 
 Use the bundled CLI as the source of truth. The runtime spine is OBS WebSocket v5; FFprobe and the OBS log provide recording proof.
 

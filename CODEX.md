@@ -1,4 +1,4 @@
-# Legends OBS Kit — Codex
+# legends-obs-kit — Codex
 
 Use the installed `legends-obs-kit` skill. Resolve the real checkout from the skill junction; do not hardcode a stale copy.
 

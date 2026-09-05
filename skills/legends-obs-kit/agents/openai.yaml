@@ -1,5 +1,5 @@
 interface:
-  display_name: "Legends OBS Kit"
+  display_name: "legends-obs-kit"
   short_description: "Hardware-aware OBS control and HDR proof"
   brand_color: "#C61B1B"
   default_prompt: "Use $legends-obs-kit to audit this machine's OBS capabilities and settings, compare drift, make guarded adjustments, and prove recording with a local canary."

@@ -1,6 +1,6 @@
 # Hardware-specific settings ledger
 
-OBS options are not universal. They change with the GPU, driver, OBS build, loaded plugins, source kinds, output modules, and display path. Legends OBS Kit therefore treats a current machine audit as operational evidence, not optional documentation.
+OBS options are not universal. They change with the GPU, driver, OBS build, loaded plugins, source kinds, output modules, and display path. legends-obs-kit therefore treats a current machine audit as operational evidence, not optional documentation.
 
 ## What is recorded
 

@@ -1,4 +1,4 @@
-export const DISPLAY_NAME = "Legends OBS Kit";
+export const DISPLAY_NAME = "legends-obs-kit";
 export const CLI_NAME = "legends-obs-kit";
 export const SHORT_CLI_NAME = "lobs";
 export const VERSION = "0.4.0";

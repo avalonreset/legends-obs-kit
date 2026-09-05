@@ -1,6 +1,10 @@
-# Legends OBS Kit
+<p align="left" id="banner">
+  <a href="https://cto-legends.com"><img src="assets/banner.webp" alt="legends-obs-kit — agentic obs control" width="100%"></a>
+</p>
 
-Legends OBS Kit is a guarded, agent-friendly CLI and skill for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
+# legends-obs-kit
+
+legends-obs-kit is a guarded, agent-friendly CLI and skill for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
 
 The universal core is hardware-neutral:
 

@@ -35,7 +35,7 @@ try {
   const packageRoot = path.join(scratch, "package");
   const packedPackage = JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8"));
   const manifest = JSON.parse(run(process.execPath, [path.join(packageRoot, "dist", "index.js"), "manifest"], packageRoot));
-  assert.equal(manifest.name, "Legends OBS Kit");
+  assert.equal(manifest.name, "legends-obs-kit");
   assert.equal(manifest.ambientMcp, false);
   assert.equal(packedPackage.version, sourcePackage.version, "packed package version must match source package.json");
   assert.equal(manifest.version, sourcePackage.version, "compiled manifest version must match package.json; rebuild dist before release");

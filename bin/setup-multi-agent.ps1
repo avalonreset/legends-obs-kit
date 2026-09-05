@@ -46,7 +46,7 @@ function Set-SkillJunction {
   Write-Host "[$Agent] linked $LinkPath" -ForegroundColor Green
 }
 
-Write-Host 'Legends OBS Kit multi-agent installer' -ForegroundColor Cyan
+Write-Host 'legends-obs-kit multi-agent installer' -ForegroundColor Cyan
 if (-not (Test-Path -LiteralPath $BuiltCli)) {
   if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot 'src\index.ts'))) {
     throw "Missing built CLI and source tree. Re-download the complete release or repository."
