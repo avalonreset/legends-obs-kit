@@ -1,5 +1,5 @@
 <p align="left" id="banner">
-  <a href="https://cto-legends.com"><img src="assets/banner.webp" alt="legends-obs-kit — agentic obs control" width="100%"></a>
+  <a href="https://cto-legends.com"><img src="assets/banner.webp" alt="legends-obs-kit: agent-operated recording with hardware checks and verified output" width="100%"></a>
 </p>
 
 # legends-obs-kit
