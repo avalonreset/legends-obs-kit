@@ -9,6 +9,15 @@
 
 legends-obs-kit is a guarded, agent-friendly CLI and skill for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
 
+Ask your agent to inspect your recording setup, explain what changed since a
+known-good recording, or plan a hardware-appropriate profile. The kit keeps
+rollback snapshots and checks the resulting recording instead of treating a
+successful settings change as proof that the output works.
+
+[install a release](#install-a-release) · [first run](#first-run) ·
+[recipes](docs/RECIPES.md) · [troubleshooting](docs/TROUBLESHOOTING.md) ·
+[agent setup](docs/AGENTS-MATRIX.md) · [settings history](docs/AUDIT-LEDGER.md)
+
 The universal core is hardware-neutral:
 
 - authenticated status, scene, source, output, and profile inventory;
@@ -26,10 +35,29 @@ Bundled recording presets are opt-in examples, not universal recommendations. `d
 - Windows 10 or 11
 - OBS Studio 28 or newer (OBS WebSocket v5 is built in)
 - Node.js 22 or newer
-- pnpm 10 (Corepack is fine)
+- pnpm 10 for source builds; the prebuilt release does not require pnpm
 - FFprobe on `PATH` only for `record:canary` (or set `LEGENDS_OBS_FFPROBE_PATH` to `ffprobe.exe`)
 
 Live compatibility was most recently verified with OBS Studio 32.2.2 and obs-websocket 5.7.4. The bundled `hdr-4k60-av1-hybrid-mp4` reference preset was canary-qualified on an NVIDIA RTX 4090; do not apply it to different hardware without reviewing `profile:plan` and the encoder inventory.
+
+## install a release
+
+Download `avalonreset-legends-obs-kit-0.4.0.tgz` and `SHA256SUMS.txt` from
+[v0.4.0](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.4.0).
+Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.4.0.tgz -Algorithm SHA256`
+with the checksum file, then extract into a new directory:
+
+```powershell
+New-Item -ItemType Directory legends-obs-release
+tar -xzf .\avalonreset-legends-obs-kit-0.4.0.tgz -C .\legends-obs-release
+Set-Location .\legends-obs-release\package
+node .\dist\index.js manifest --pretty
+```
+
+The release contains compiled commands and the skill; no TypeScript build is
+needed. Keep this directory if you install linked skills from it. To register
+them with supported local agents, run
+`pwsh -NoProfile -File .\bin\setup-multi-agent.ps1`, then follow the first run.
 
 ## Install from source
 
