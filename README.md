@@ -1,8 +1,11 @@
-<p align="left" id="banner">
-  <a href="https://cto-legends.com"><img src="assets/banner.webp" alt="legends-obs-kit: agent-operated recording with hardware checks and verified output" width="100%"></a>
-</p>
+<a name="banner"></a>
+<a name="legends-obs-kit"></a>
 
-# legends-obs-kit
+# ![legends-obs-kit](assets/banner.webp)
+
+[![release](https://img.shields.io/github/v/release/avalonreset/legends-obs-kit?label=release&sort=date&style=flat-square&labelColor=000000&color=ff0000)](https://github.com/avalonreset/legends-obs-kit/releases/latest)
+[![checks](https://img.shields.io/github/actions/workflow/status/avalonreset/legends-obs-kit/ci.yml?branch=main&label=checks&style=flat-square&labelColor=000000)](https://github.com/avalonreset/legends-obs-kit/actions/workflows/ci.yml)
+[![license](https://img.shields.io/github/license/avalonreset/legends-obs-kit?label=license&style=flat-square&labelColor=000000&color=666666)](LICENSE)
 
 legends-obs-kit is a guarded, agent-friendly CLI and skill for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
 
