@@ -1,0 +1,40 @@
+{
+  "template": "legends-social-v1",
+  "title": "legends-obs-kit",
+  "subtitle": "agent-operated recording with hardware checks and verified output",
+  "size": [
+    1280,
+    640
+  ],
+  "title_px": 64,
+  "subtitle_px": 36,
+  "safe_margin_px": 80,
+  "lines": [
+    "agent-operated recording with",
+    "hardware checks and verified output"
+  ],
+  "text_bounds": [
+    [
+      80,
+      176,
+      680,
+      239
+    ],
+    [
+      80,
+      324,
+      718,
+      362
+    ],
+    [
+      80,
+      372,
+      850,
+      408
+    ]
+  ],
+  "font_sha256": "3769f0f76477a7d9e2e6cb40422dedacb56c9ab1a6f7beee89b2b9ba6b8091ee",
+  "image_sha256": "3f7be2b09cedbdecffe40a0dfc6f2eafad1dfd026c3c5a48c577707e4295446d",
+  "bytes": 22385,
+  "upload_status": "not_attempted"
+}
