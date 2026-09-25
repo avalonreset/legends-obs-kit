@@ -47,52 +47,55 @@ local DEFAULTS = {
   origin_y = 0,
   visual_mode = MODE_MOMENTUM,
   shape_mode = SHAPE_CIRCLE,
-  activation_mode = ACT_SNAPPY,
-  radius = 82.0,
-  thickness = 12.0,
-  glow = 90.0,
-  opacity = 0.92,
+  activation_mode = ACT_QUADRATIC,
+  radius = 90.0,
+  thickness = 14.0,
+  glow = 40.0,
+  opacity = 0.95,
   enable_floaty_follow = true,
   follow_lag_ms = 255.0,
-  enable_idle_pulse = true,
+  enable_idle_pulse = false,
   enable_motion_ticks = true,
-  enable_laser_wake = true,
-  enable_comet_trail = true,
-  enable_stretch_warp = true,
+  enable_laser_wake = false,
+  enable_comet_trail = false,
+  enable_stretch_warp = false,
   enable_left_click = true,
   enable_right_click = true,
-  idle_activity = 0.22,
+  idle_activity = 0.10,
   mode_strength = 1.0,
-  speed_limit = 3200.0,
+  speed_limit = 2000.0,
   click_size = 330.0,
   click_duration = 0.70,
   left_intensity = 1.0,
   right_intensity = 1.0,
   motion_spin = 1.0,
-  motion_decay = 5.5,
+  motion_decay = 5.0,
   motion_ticks = 0.85,
-  tick_count = 10.0,
+  tick_count = 12.0,
   stretch_strength = 0.70,
   wake_strength = 0.60,
   trail_strength = 0.55,
   trail_spacing = 0.030,
   trail_duration = 0.42,
-  finder_enabled = true,
+  finder_enabled = false,
   finder_sensitivity = 6.0,
   finder_size = 1.90,
   finder_decay = 2.2,
-  main_r = 0.0,
-  main_g = 1.0,
-  main_b = 0.47,
-  accent_r = 0.18,
-  accent_g = 0.80,
-  accent_b = 1.0,
+  -- Sandwich palette (locked art): white / Legends red / black
+  -- main = mid ring + glow (Legends red #FF0000)
+  main_r = 1.0,
+  main_g = 0.0,
+  main_b = 0.0,
+  -- accent = trails / wake / finder (same red family)
+  accent_r = 1.0,
+  accent_g = 0.0,
+  accent_b = 0.0,
   left_r = 1.0,
   left_g = 1.0,
   left_b = 1.0,
   right_r = 1.0,
-  right_g = 0.18,
-  right_b = 0.78,
+  right_g = 0.0,
+  right_b = 0.0,
 }
 
 local function clamp(v, lo, hi)
@@ -139,6 +142,91 @@ local function get_cursor_xy(data)
   end
   return data.mouse_x or 0.0, data.mouse_y or 0.0
 end
+
+
+local function file_mtime(path)
+  if path == nil or path == "" then return 0 end
+  local f = io.open(path, "rb")
+  if f == nil then return 0 end
+  f:close()
+  -- OBS Lua has no portable stat; use a sidecar stamp when present, else always prefer file content hash length.
+  local stamp = io.open(path .. ".mtime", "r")
+  if stamp ~= nil then
+    local s = stamp:read("*l")
+    stamp:close()
+    return tonumber(s) or 0
+  end
+  local f2 = io.open(path, "rb")
+  if f2 == nil then return 0 end
+  local content = f2:read("*a") or ""
+  f2:close()
+  return #content
+end
+
+local function load_effect_source(path)
+  if path == nil or path == "" then return nil end
+  local f = io.open(path, "rb")
+  if f == nil then return nil end
+  local content = f:read("*a")
+  f:close()
+  if content == nil or #content < 32 then return nil end
+  if not string.find(content, "PSDefault", 1, true) then return nil end
+  return content
+end
+
+local function rebuild_effect(data)
+  if data == nil then return end
+  local src = load_effect_source(data.effect_path) or EFFECT
+  obs.obs_enter_graphics()
+  if data.effect ~= nil then
+    obs.gs_effect_destroy(data.effect)
+    data.effect = nil
+  end
+  data.effect = obs.gs_effect_create(src, "legends_cursor_source", nil)
+  data.params = {}
+  if data.effect ~= nil then
+    local names = {
+      "width", "height", "time", "mouse_x", "mouse_y",
+      "filter_mode",
+      "visual_mode", "shape_mode",
+      "radius", "thickness", "glow", "opacity", "idle_activity",
+      "mode_strength", "click_size", "click_duration",
+      "left_intensity", "right_intensity",
+      "speed_active", "spin_phase", "vel_x", "vel_y",
+      "motion_ticks", "tick_count", "stretch_strength", "wake_strength",
+      "trail_strength", "trail_duration",
+      "shake_amount", "finder_size",
+      "main_r", "main_g", "main_b",
+      "accent_r", "accent_g", "accent_b",
+      "left_r", "left_g", "left_b",
+      "right_r", "right_g", "right_b",
+      "click1", "click2", "click3", "click4",
+      "click5", "click6", "click7", "click8",
+      "trail1", "trail2", "trail3", "trail4",
+      "trail5", "trail6", "trail7", "trail8"
+    }
+    for _, name in ipairs(names) do
+      data.params[name] = obs.gs_effect_get_param_by_name(data.effect, name)
+    end
+  end
+  obs.obs_leave_graphics()
+  data.effect_mtime = file_mtime(data.effect_path)
+  data.effect_src = src
+  if data.effect == nil then
+    obs.script_log(obs.OBS_LOG_ERROR, "Legends Cursor failed to rebuild effect from " .. tostring(data.effect_path))
+  else
+    obs.script_log(obs.OBS_LOG_INFO, "Legends Cursor effect loaded (" .. tostring(#src) .. " bytes)")
+  end
+end
+
+local function reload_effect_if_stale(data)
+  if data == nil or data.effect_path == nil then return end
+  local m = file_mtime(data.effect_path)
+  if m > 0 and m ~= (data.effect_mtime or 0) then
+    rebuild_effect(data)
+  end
+end
+
 
 local function set_float(param, value)
   if param == nil or param == ffi.NULL then return end
@@ -318,7 +406,11 @@ source_def.create = function(settings, source)
   read_settings(data, settings)
 
   obs.obs_enter_graphics()
-  data.effect = obs.gs_effect_create(EFFECT, "legends_cursor_source", nil)
+  data.effect_path = script_path() .. "legends_cursor_filter.effect"
+  data.effect_mtime = 0
+  data.effect_src = load_effect_source(data.effect_path) or EFFECT
+  data.effect = obs.gs_effect_create(data.effect_src, "legends_cursor_source", nil)
+  data.effect_mtime = file_mtime(data.effect_path)
   if data.effect ~= nil then
     local names = {
       "width", "height", "time", "mouse_x", "mouse_y",
@@ -433,8 +525,8 @@ source_def.get_properties = function(data)
   obs.obs_properties_add_float_slider(props, "finder_size", "Shake finder size", 1.0, 5.0, 0.05)
   obs.obs_properties_add_float_slider(props, "finder_decay", "Shake finder decay", 0.5, 8.0, 0.1)
 
-  add_color_sliders(props, "main", "Main halo color")
-  add_color_sliders(props, "accent", "Accent / trail color")
+  add_color_sliders(props, "main", "Middle ring / glow (Legends red)")
+  add_color_sliders(props, "accent", "Trail / wake / finder color")
   add_color_sliders(props, "left", "Left click color")
   add_color_sliders(props, "right", "Right click color")
   return props
@@ -455,6 +547,7 @@ source_def.get_height = function(data)
 end
 
 source_def.video_tick = function(data, seconds)
+  reload_effect_if_stale(data)
   if data == nil then return end
   if data.is_filter then
     local target = obs.obs_filter_get_target(data.source)
@@ -490,16 +583,27 @@ source_def.video_tick = function(data, seconds)
     local vx = dx / dt
     local vy = dy / dt
     local speed = math.sqrt(vx * vx + vy * vy)
-    local blend = clamp(dt * 12.0, 0.0, 1.0)
+    local kinematic_blend = clamp(dt * 12.0, 0.0, 1.0)
 
-    data.vel_x = data.vel_x + (vx - data.vel_x) * blend
-    data.vel_y = data.vel_y + (vy - data.vel_y) * blend
-    data.speed_px = data.speed_px + (speed - data.speed_px) * blend
-    data.speed_active = data.speed_active + (activation_curve(data, data.speed_px) - data.speed_active) * blend
+    data.vel_x = data.vel_x + (vx - data.vel_x) * kinematic_blend
+    data.vel_y = data.vel_y + (vy - data.vel_y) * kinematic_blend
+    data.speed_px = data.speed_px + (speed - data.speed_px) * kinematic_blend
+
+    -- Separate visual momentum from raw kinematics: dots scale up quickly but
+    -- settle back with a slower, organic release instead of jump-cutting off.
+    local activity_target = activation_curve(data, data.speed_px)
+    local activity_rate = activity_target > data.speed_active and 9.0 or 1.35
+    local activity_blend = clamp(1.0 - math.exp(-activity_rate * dt), 0.0, 1.0)
+    data.speed_active = data.speed_active + (activity_target - data.speed_active) * activity_blend
 
     local decay = math.exp(-math.max(data.motion_decay, 0.1) * dt)
-    data.spin_velocity = data.spin_velocity * decay + (dx / math.max(data.width, 1)) * data.motion_spin * 28.0
-    data.spin_phase = data.spin_phase + data.spin_velocity * dt * 10.0
+    local spin_gate = clamp((data.speed_active - 0.06) / 0.94, 0.0, 1.0)
+    -- Live direction contract: positive horizontal travel subtracts phase so
+    -- a left-to-right sweep rotates counterclockwise in OBS Program.  A
+    -- right-to-left sweep therefore adds phase and rotates clockwise.
+    data.spin_velocity = data.spin_velocity * decay
+      - (dx / math.max(data.width, 1)) * data.motion_spin * 16.0 * spin_gate
+    data.spin_phase = data.spin_phase + data.spin_velocity * dt * 4.0
 
     if data.finder_enabled then
       local prev_mag = math.sqrt(data.prev_vel_x * data.prev_vel_x + data.prev_vel_y * data.prev_vel_y)
@@ -791,26 +895,89 @@ float2 stretch_space(float2 p)
   return dir * (along / (1.0 + amount)) + perp * (1.0 + amount * 0.24);
 }
 
-float spoke_burst(float2 p, float age, float size, float phase, float density)
+float spoke_burst_layer(float2 p, float age, float size, float phase, float density, float padding)
 {
   if (age < 0.0 || age > click_duration) return 0.0;
   float t = age / click_duration;
   float d = shape_distance(p);
   float a = atan2(p.y, p.x);
   float spokes = pow(saturate(sin(a * density + phase) * 0.5 + 0.5), 9.0);
-  float radial = ring(d, radius + size * (0.15 + 0.85 * t), max(thickness * 0.75, 4.0), 4.0);
+  float radial = ring(d, radius + size * (0.15 + 0.85 * t), max(thickness * 0.75, 4.0) + padding, 4.0);
   return spokes * radial * pow(1.0 - t, 1.15);
 }
 
-float circle_click(float2 p, float age)
+float spoke_burst(float2 p, float age, float size, float phase, float density)
+{
+  return spoke_burst_layer(p, age, size, phase, density, 0.0);
+}
+
+float alternating_spoke_selector(float2 p, float phase, float density)
+{
+  // At each spoke maximum this changes sign, producing a stable alternating
+  // black / white sequence without changing the burst's geometry or timing.
+  float spoke_phase = atan2(p.y, p.x) * density + phase;
+  return step(0.0, sin(spoke_phase * 0.5));
+}
+
+void click_circle_burst(float2 p, float age, float size, float phase,
+                        out float white_dots, out float black_dots)
+{
+  white_dots = 0.0;
+  black_dots = 0.0;
+  if (age < 0.0 || age > click_duration) return;
+  float t = age / click_duration;
+  float orbit = radius + size * (0.15 + 0.85 * t);
+  float dot_radius = max(thickness * 0.60, 5.0);
+  float fade = pow(1.0 - t, 1.15);
+  // Sixteen identical Euclidean circle SDFs at exact 22.5-degree intervals.
+  // Opposed dots share a color; adjacent dots alternate white and black.
+  for (int i = 0; i < 16; i++) {
+    float angle = (float(i) / 16.0) * 6.28318530718 + phase;
+    float2 center = float2(cos(angle), sin(angle)) * orbit;
+    float dot = (1.0 - smoothstep(dot_radius, dot_radius + 2.0,
+      length(p - center))) * fade;
+    int alternating = i - (i / 2) * 2;
+    if (alternating == 0) white_dots = max(white_dots, dot);
+    else black_dots = max(black_dots, dot);
+  }
+}
+
+float circle_click_layer(float2 p, float age, float padding)
 {
   if (age < 0.0 || age > click_duration) return 0.0;
   float t = age / click_duration;
   float d = shape_distance(p);
   float r = radius + click_size * t;
-  float ripple = ring(d, r, max(thickness * (0.85 + t), 5.0), 4.0);
-  float flash = life(age, 0.28, 1.7) * (1.0 - smoothstep(0.0, radius * 0.95, d)) * 0.34;
+  float ripple = ring(d, r, max(thickness * (0.85 + t), 5.0) + padding, 4.0);
+  float flash_radius = radius * 0.95 + padding * 2.0;
+  float flash = life(age, 0.28, 1.7) * (1.0 - smoothstep(0.0, flash_radius, d)) * 0.34;
   return ripple * pow(1.0 - t, 1.22) + flash;
+}
+
+float circle_click(float2 p, float age)
+{
+  return circle_click_layer(p, age, 0.0);
+}
+
+void circle_click_concentric(float2 p, float age, out float white_ring, out float black_ring)
+{
+  white_ring = 0.0;
+  black_ring = 0.0;
+  if (age < 0.0 || age > click_duration) return;
+  float t = age / click_duration;
+  float d = shape_distance(p);
+  float r = radius + click_size * t;
+  float half_width = max(thickness * (0.85 + t), 5.0);
+  float radial = d - r;
+  float shell = 1.0 - smoothstep(half_width, half_width + 4.0, abs(radial));
+  float fade = pow(1.0 - t, 1.22);
+  // Same construction as the main cursor sandwich: adjacent concentric bands,
+  // not angular halves.  Inner is white; outer is black.
+  float outer = step(0.0, radial);
+  white_ring = shell * (1.0 - outer) * fade;
+  black_ring = shell * outer * fade;
+  // Preserve the original short center flash without changing its timing.
+  white_ring += life(age, 0.28, 1.7) * (1.0 - smoothstep(0.0, radius * 0.95, d)) * 0.34;
 }
 
 float diamond_click(float2 p, float age)
@@ -826,24 +993,79 @@ float diamond_click(float2 p, float age)
   return diamond * pow(1.0 - t, 1.08) + cross * band * pow(1.0 - t, 1.2) + flash;
 }
 
-float click_alpha(float2 p, float4 click, out float right_weight)
+void click_layers(float2 p, float4 click, out float left_core, out float left_under, out float right_core)
 {
-  right_weight = click.w > 1.5 ? 1.0 : 0.0;
-  if (click.w <= 0.0 || click.z < 0.0 || click.z > click_duration) return 0.0;
+  left_core = 0.0;
+  left_under = 0.0;
+  right_core = 0.0;
+  if (click.w <= 0.0 || click.z < 0.0 || click.z > click_duration) return;
   float2 q = p - click.xy;
-  float left = circle_click(q, click.z) + spoke_burst(q, click.z, click_size, spin_phase + time * 3.0, 13.0);
-  float right = diamond_click(q, click.z) + spoke_burst(q, click.z, click_size * 0.78, -spin_phase - time * 2.4, 8.0) * 0.75;
-  return lerp(left * left_intensity, right * right_intensity, right_weight);
+  if (click.w < 1.5) {
+    // Main-cursor concept applied to the original click: adjacent concentric
+    // white/black bands expand together.  Sixteen circular dots sit at exact
+    // 22.5-degree intervals, yielding eight opposed same-color pairs.
+    float burst_phase = spin_phase + time * 3.0;
+    float white_ring = 0.0;
+    float black_ring = 0.0;
+    float white_dots = 0.0;
+    float black_dots = 0.0;
+    circle_click_concentric(q, click.z, white_ring, black_ring);
+    click_circle_burst(q, click.z, click_size, burst_phase, white_dots, black_dots);
+    left_core = (white_ring + white_dots) * left_intensity;
+    left_under = (black_ring + black_dots) * left_intensity;
+  } else {
+    right_core = (diamond_click(q, click.z)
+      + spoke_burst(q, click.z, click_size * 0.78, -spin_phase - time * 2.4, 8.0) * 0.75) * right_intensity;
+  }
 }
 
-float rotating_ticks(float2 p, float d)
+// Momentum satellites: 12 true circles, colored black → red → white.
+// They appear and rotate from cursor momentum only; there is no idle animation.
+float cubic_bezier_y(float t, float p1, float p2)
 {
-  float a = atan2(p.y, p.x);
-  float tick = pow(saturate(sin(a * max(tick_count, 1.0) + spin_phase) * 0.5 + 0.5), 18.0);
-  float momentum_mode = abs(visual_mode - 1.0) < 0.5 ? 1.0 : 0.0;
-  float base = 0.18 * idle_activity + speed_active * motion_ticks * (0.50 + momentum_mode * 0.80);
-  float band = ring(d, radius * (1.16 + speed_active * 0.24), max(thickness * 0.55, 3.0), 3.0);
-  return tick * band * base * mode_strength;
+  t = saturate(t);
+  float u = 1.0 - t;
+  return 3.0 * u * u * t * p1 + 3.0 * u * t * t * p2 + t * t * t;
+}
+
+float rotating_ticks(float2 p, out float3 tick_rgb)
+{
+  tick_rgb = float3(0.0, 0.0, 0.0);
+  float n = max(tick_count, 1.0);
+  // Scale from zero on a slow cubic Bezier curve instead of fading or moving
+  // radially.  P1=0 gives a zero-slope start; P2=0.72 delays the middle of
+  // the growth while still arriving smoothly at full size.
+  float growth_t = saturate((speed_active - 0.01) / 0.62);
+  float dot_scale = cubic_bezier_y(growth_t, 0.0, 0.72);
+  if (dot_scale <= 0.0001) return 0.0;
+  float base = saturate(motion_ticks * 0.95);
+
+  float full_dot_size = max(thickness * 0.55, 4.0);
+  float dot_size = full_dot_size * dot_scale;
+  float dot_aa = max(0.35, 2.0 * dot_scale);
+  // Keep the complete satellite disc, including its 2 px AA fringe, clear of
+  // the outer shell at full size.  This orbit is constant: momentum changes
+  // only satellite scale and angular rotation, never radial position.
+  float shell_outer = radius + thickness * 0.5;
+  float orbit = shell_outer + full_dot_size + 10.0 + radius * 0.03;
+  float energy = 0.0;
+  float3 rgb_acc = float3(0.0, 0.0, 0.0);
+  for (int i = 0; i < 24; i++) {
+    if (float(i) >= n) break;
+    float ang = (float(i) / n) * 6.28318530718 + spin_phase;
+    float2 center = float2(cos(ang), sin(ang)) * orbit;
+    float circle = 1.0 - smoothstep(dot_size, dot_size + dot_aa, length(p - center));
+    float e = circle * base * mode_strength;
+    if (e <= 0.0001) continue;
+    int cyc = i - (i / 3) * 3; // i % 3 without %
+    float3 col = float3(0.0, 0.0, 0.0); // outer-ring black
+    if (cyc == 1) col = float3(1.0, 0.0, 0.0); // middle-ring red
+    if (cyc == 2) col = float3(1.0, 1.0, 1.0); // inner-ring white
+    rgb_acc += col * e;
+    energy += e;
+  }
+  if (energy > 0.0001) tick_rgb = rgb_acc / energy;
+  return energy;
 }
 
 float wake_mark(float2 p)
@@ -871,8 +1093,11 @@ float trail_mark(float2 p, float4 item)
 
 float finder_rings(float d)
 {
-  float manual = abs(visual_mode - 4.0) < 0.5 ? speed_active * 0.26 : 0.0;
-  float finder = max(shake_amount, manual) * mode_strength;
+  float finder_mode = abs(visual_mode - 4.0) < 0.5 ? 1.0 : 0.0;
+  float manual = speed_active * 0.26 * finder_mode;
+  // Shake state may still be retained by Lua, but it must never alter the
+  // Momentum/Classical ring geometry outside Finder mode.
+  float finder = max(shake_amount * finder_mode, manual) * mode_strength;
   float scaled = radius * lerp(1.0, finder_size, saturate(finder));
   float outer1 = ring(d, scaled, max(thickness * 0.78, 4.0), 5.0);
   float outer2 = ring(d, scaled * 1.34 + sin(time * 7.0) * 9.0, max(thickness * 0.45, 3.0), 6.0);
@@ -882,19 +1107,33 @@ float finder_rings(float d)
 float4 PSDefault(VertOut v_in) : TARGET
 {
   float2 p = v_in.uv * float2(width, height);
-  float2 m = float2(mouse_x, mouse_y);
+  // Floaty-follow produces fractional coordinates.  Snap the displayed center
+  // to the physical pixel grid so opposite sides receive identical samples.
+  float2 m = floor(float2(mouse_x, mouse_y) + 0.5);
   float2 local_p = p - m;
   float2 shaped_p = stretch_space(local_p);
   float d = shape_distance(shaped_p);
 
-  float finder = max(shake_amount, abs(visual_mode - 4.0) < 0.5 ? speed_active * 0.22 : 0.0) * mode_strength;
+  float finder_mode = abs(visual_mode - 4.0) < 0.5 ? 1.0 : 0.0;
+  float finder = max(shake_amount * finder_mode, speed_active * 0.22 * finder_mode) * mode_strength;
   float pulse = 1.0 + sin(time * 4.6) * idle_activity * 0.12;
   float r = radius * pulse * lerp(1.0, finder_size, saturate(finder) * 0.35);
 
-  float halo = ring(d, r, thickness, 2.0);
-  float haze = (1.0 - smoothstep(r, r + glow, d)) * 0.34;
-  float inner = (1.0 - smoothstep(r - thickness * 0.35, r, d)) * 0.10;
-  float ticks = rotating_ticks(shaped_p, d);
+  // One centered shell, partitioned into three equal radial thirds.  Using a
+  // single distance field prevents overlap and guarantees rotational symmetry.
+  // `thickness` is the total shell width, not a half-width per color.
+  float shell_width = max(thickness, 3.0);
+  float shell_half = shell_width * 0.5;
+  float radial = d - r;
+  float shell = 1.0 - smoothstep(shell_half, shell_half + 1.0, abs(radial));
+  float boundary = shell_width / 6.0;
+  float inner_to_mid = smoothstep(-boundary - 0.45, -boundary + 0.45, radial);
+  float mid_to_outer = smoothstep(boundary - 0.45, boundary + 0.45, radial);
+  // Symmetric annular glow on both sides of the shell; never fill the center.
+  float shell_distance = max(abs(radial) - shell_half, 0.0);
+  float haze = (1.0 - smoothstep(0.0, max(glow, 0.001), shell_distance)) * 0.08 * (1.0 - shell);
+  float3 tick_rgb = float3(0.0, 0.0, 0.0);
+  float ticks = rotating_ticks(shaped_p, tick_rgb);
   float wake = wake_mark(local_p) * (abs(visual_mode) < 0.5 ? 0.20 : 1.0);
 
   float trail = 0.0;
@@ -908,35 +1147,61 @@ float4 PSDefault(VertOut v_in) : TARGET
   trail += trail_mark(p, trail8);
   trail = saturate(trail);
 
-  float right_mix = 0.0;
-  float rm = 0.0;
-  float ca = 0.0;
-  float a = 0.0;
-  a = click_alpha(p, click1, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click2, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click3, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click4, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click5, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click6, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click7, rm); ca += a; right_mix += a * rm;
-  a = click_alpha(p, click8, rm); ca += a; right_mix += a * rm;
-  ca = saturate(ca);
-  right_mix = ca > 0.001 ? saturate(right_mix / ca) : 0.0;
+  float left_click_core = 0.0;
+  float left_click_under = 0.0;
+  float right_click_core = 0.0;
+  float lc = 0.0;
+  float lu = 0.0;
+  float rc = 0.0;
+  click_layers(p, click1, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click2, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click3, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click4, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click5, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click6, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click7, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  click_layers(p, click8, lc, lu, rc); left_click_core += lc; left_click_under += lu; right_click_core += rc;
+  left_click_core = saturate(left_click_core);
+  left_click_under = saturate(left_click_under);
+  right_click_core = saturate(right_click_core);
 
   float finder_energy = finder_rings(d);
-  float3 main_color = float3(main_r, main_g, main_b);
-  float3 accent_color = float3(accent_r, accent_g, accent_b);
-  float3 left_color = float3(left_r, left_g, left_b);
-  float3 right_color = float3(right_r, right_g, right_b);
-  float3 click_color = lerp(left_color, right_color, right_mix);
 
-  float base_energy = halo + haze + inner + ticks;
-  float accent_energy = trail + wake + finder_energy;
-  float main_a = saturate(base_energy * opacity);
-  float accent_a = saturate(accent_energy * opacity);
-  float click_a = saturate(ca * opacity);
-  float3 rgb = main_color * main_a + accent_color * accent_a + click_color * click_a;
-  float out_a = saturate(main_a + accent_a + click_a);
+  // Locked sandwich palette (house law): black / #FF0000 / white.
+  // Core chrome ignores saved green/cyan so NERV reloads clean.
+  float3 C_BLACK = float3(0.0, 0.0, 0.0);
+  float3 C_WHITE = float3(1.0, 1.0, 1.0);
+  float3 C_RED = float3(1.0, 0.0, 0.0);
+  float3 ring_color = lerp(C_WHITE, C_RED, inner_to_mid);
+  ring_color = lerp(ring_color, C_BLACK, mid_to_outer);
+  float3 mid_color = C_RED;
+  float3 accent_color = C_RED;
+  float ring_a = saturate(shell * opacity);
+  float haze_a = saturate(haze * opacity);
+  float ticks_a = saturate(ticks * opacity);
+  float accent_a = saturate((trail + wake + finder_energy) * opacity);
+  float left_under_a = saturate(left_click_under * opacity);
+  float left_core_a = saturate(left_click_core * opacity);
+  float left_edge_a = left_under_a;
+  float right_click_a = saturate(right_click_core * opacity);
+  // Black and white click masks are disjoint; alpha must include both.
+  float click_a = saturate(max(max(left_under_a, left_core_a), right_click_a));
+
+  // Sandwich on TOP of a weak red glow so bands stay distinct.
+  // NOTE: black only reads if the OBS source blend is Normal (not Additive).
+  // Momentum dots cycle white / black / Legends red (12 by default).
+  float3 rgb = mid_color * haze_a;
+  // Satellites render first so the ring naturally occludes them while they
+  // emerge/retract, rather than letting a dot deform the ring silhouette.
+  rgb = rgb * (1.0 - ticks_a) + tick_rgb * ticks_a;
+  rgb = rgb * (1.0 - ring_a) + ring_color * ring_a;
+  rgb = rgb + accent_color * accent_a;
+  // Composite the disjoint flat black and white halves.  Neither layer is an
+  // outline or shadow.  Right-click remains Legends red and is unchanged.
+  rgb = rgb * (1.0 - left_edge_a);
+  rgb = rgb * (1.0 - left_core_a) + C_WHITE * left_core_a;
+  rgb = rgb * (1.0 - right_click_a) + C_RED * right_click_a;
+  float out_a = saturate(max(ring_a, haze_a) + ticks_a + accent_a + click_a);
   if (filter_mode > 0.5) {
     float4 base = image.Sample(textureSampler, v_in.uv);
     return float4(saturate(base.rgb * 0.0 + rgb * out_a), out_a);
