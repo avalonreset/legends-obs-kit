@@ -42,14 +42,14 @@ Live compatibility was most recently verified with OBS Studio 32.2.2 and obs-web
 
 ## install a release
 
-Download `avalonreset-legends-obs-kit-0.4.0.tgz` and `SHA256SUMS.txt` from
-[v0.4.0](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.4.0).
-Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.4.0.tgz -Algorithm SHA256`
+Download `avalonreset-legends-obs-kit-0.4.1.tgz` and `SHA256SUMS.txt` from
+[v0.4.1](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.4.1).
+Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.4.1.tgz -Algorithm SHA256`
 with the checksum file, then extract into a new directory:
 
 ```powershell
 New-Item -ItemType Directory legends-obs-release
-tar -xzf .\avalonreset-legends-obs-kit-0.4.0.tgz -C .\legends-obs-release
+tar -xzf .\avalonreset-legends-obs-kit-0.4.1.tgz -C .\legends-obs-release
 Set-Location .\legends-obs-release\package
 node .\dist\index.js manifest --pretty
 ```
@@ -124,6 +124,10 @@ See [First run](docs/FIRST-RUN.md), [Recipes](docs/RECIPES.md), [Safety](docs/SA
 ## Optional extra: animated cursor overlay
 
 `extras/cursor/` carries the Legends Cursor Filter: halo, momentum ticks, click ripples, comet trail, glow. Windows only, fully optional. See `extras/cursor/README.md`. That extra is GPL-2.0-or-later and separable; the kit stays MIT.
+
+<p align="center">
+  <img src="extras/cursor/demo/legends-cursor-demo.gif" alt="Animated demo of the Legends Cursor Filter: halo, momentum ticks, click ripples, and comet trail" width="100%">
+</p>
 
 ## License
 
