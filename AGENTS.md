@@ -1,6 +1,6 @@
 # legends-obs-kit — agent instructions
 
-1. Read `LEGENDS.md` and `skills/legends-obs-kit/SKILL.md`.
+1. Read `README.md` and `skills/cto-legends/SKILL.md`.
 2. Resolve the CLI as documented in the skill, then run `doctor --pretty`, `manifest --pretty`, and `agent:context --pretty`. In a cloned or extracted release, the universal invocation is `node .\dist\index.js <command>`; a global install also provides `lobs`.
 3. Use the TypeScript CLI as the source of truth. Do not bypass it with raw OBS config edits or ambient MCP.
 4. Read before write: `audit:status`, `audit:diff --against good`, `status` or `inventory`, then `profile:plan --preset <id>` only after choosing a hardware-appropriate preset. If no ledger exists, capture a baseline first.

@@ -13,14 +13,11 @@ const required = [
   "presets/hdr-4k60-av1-balanced.json",
   "presets/hdr-4k60-av1-hybrid-mp4.json",
   "skills",
+  ".legends-module",
+  ".legends-router-pin",
   "AGENTS.md",
   "CHANGELOG.md",
-  "CLAUDE.md",
-  "CODEX.md",
   "CONTRIBUTING.md",
-  "GEMINI.md",
-  "GROK.md",
-  "LEGENDS.md",
   "LICENSE",
   "README.md",
   "SECURITY.md",
@@ -34,8 +31,12 @@ assert.notEqual(packageJson.private, true, "public release package must not be p
 assert.equal(packageJson.license, "MIT");
 assert.equal(packageJson.repository?.url, "git+https://github.com/avalonreset/legends-obs-kit.git");
 
-const skillText = await readFile(path.join(root, "skills", "legends-obs-kit", "SKILL.md"), "utf8");
-assert.match(skillText, /^---\r?\nname: legends-obs-kit\r?\ndescription: .+\r?\n---/s, "SKILL.md needs valid name and description frontmatter");
+const skillText = await readFile(path.join(root, "skills", "cto-legends", "SKILL.md"), "utf8");
+assert.match(skillText, /^---\r?\nname: cto-legends\r?\ndescription: .+\r?\n---/s, "vendored router SKILL.md needs valid name and description frontmatter");
+const moduleId = (await readFile(path.join(root, ".legends-module"), "utf8")).trim();
+assert.equal(moduleId, "legends-obs-kit", ".legends-module must hold the module id");
+const routerPin = (await readFile(path.join(root, ".legends-router-pin"), "utf8")).trim();
+assert.match(routerPin, /^[0-9a-f]{40}$/, ".legends-router-pin must hold the router commit SHA");
 
 const npmCommand = process.platform === "win32" ? process.execPath : "npm";
 const npmPrefix = process.platform === "win32"
@@ -53,7 +54,7 @@ const packedFiles = packReport[0].files.map((entry) => String(entry.path).replac
 for (const forbidden of ["node_modules/", ".legends-obs-kit/", ".codex-tmp/", ".env", "scripts/fix-nvenc", "scripts/wire-kick"]) {
   assert(!packedFiles.some((file) => file === forbidden || file.startsWith(forbidden)), `packed artifact contains forbidden path: ${forbidden}`);
 }
-for (const requiredFile of ["dist/index.js", "presets/hdr-4k60-av1-balanced.json", "presets/hdr-4k60-av1-hybrid-mp4.json", "skills/legends-obs-kit/SKILL.md", "bin/setup-multi-agent.ps1", "LICENSE", "README.md"]) {
+for (const requiredFile of ["dist/index.js", "presets/hdr-4k60-av1-balanced.json", "presets/hdr-4k60-av1-hybrid-mp4.json", "skills/cto-legends/SKILL.md", ".legends-module", ".legends-router-pin", "bin/doctor.ps1", "LICENSE", "README.md"]) {
   assert(packedFiles.includes(requiredFile), `packed artifact missing ${requiredFile}`);
 }
 
@@ -72,13 +73,7 @@ const publicRoots = ["bin", "dist", "docs", "presets", "skills", "src", "test"].
 const publicFiles = [
   path.join(root, "AGENTS.md"),
   path.join(root, "CHANGELOG.md"),
-  path.join(root, "CLAUDE.md"),
-  path.join(root, "CODEX.md"),
   path.join(root, "CONTRIBUTING.md"),
-  path.join(root, "GEMINI.md"),
-  path.join(root, "GROK.md"),
-  path.join(root, "LEGENDS.md"),
-  path.join(root, "NEXT.md"),
   path.join(root, "README.md"),
   path.join(root, "SECURITY.md"),
 ];

@@ -40,22 +40,12 @@ try {
   assert.equal(packedPackage.version, sourcePackage.version, "packed package version must match source package.json");
   assert.equal(manifest.version, sourcePackage.version, "compiled manifest version must match package.json; rebuild dist before release");
 
-  const skill = await readFile(path.join(packageRoot, "skills", "legends-obs-kit", "SKILL.md"), "utf8");
-  assert.match(skill, /node <root>\\dist\\index\.js/);
-  assert.match(skill, /lobs doctor --pretty/);
+  const skill = await readFile(path.join(packageRoot, "skills", "cto-legends", "SKILL.md"), "utf8");
+  assert.match(skill, /^---\r?\nname: cto-legends\r?\n/s);
 
   const doctor = await readFile(path.join(packageRoot, "bin", "doctor.ps1"), "utf8");
   assert.match(doctor, /dist\\index\.js/);
   assert.doesNotMatch(doctor, /E:\\/i);
-
-  if (process.platform === "win32") {
-    const installHome = path.join(scratch, "install-home");
-    await mkdir(installHome);
-    const installEnv = { ...process.env, USERPROFILE: installHome, HOME: installHome };
-    const installer = path.join(packageRoot, "bin", "setup-multi-agent.ps1");
-    run("pwsh.exe", ["-NoProfile", "-File", installer, "-SkipDoctor"], packageRoot, installEnv);
-    run("pwsh.exe", ["-NoProfile", "-File", installer, "-SkipDoctor"], packageRoot, installEnv);
-  }
 
   console.log(JSON.stringify({
     ok: true,

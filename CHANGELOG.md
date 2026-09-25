@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.0 - 2026-09-25
+
+- Router-native reset generation: de-skillified to the single registered `cto-legends` router skill (vendored pinned copy at `skills/cto-legends/SKILL.md`, router commit `6975dcb`).
+- Removed the per-module skill registration (`skills/legends-obs-kit/`), host shims (`CLAUDE.md`, `CODEX.md`, `GEMINI.md`, `GROK.md`, `LEGENDS.md`), and per-host module installers (`bin/setup-multi-agent.ps1`/`.sh`).
+- `package.json` is the authoritative version string; old releases and tags wiped, history preserved.
+
 ## 0.4.1
 
 - Adopt the former standalone cursor overlay as optional extra `extras/cursor/` (filter Lua, shader, installer, readme).

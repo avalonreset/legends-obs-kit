@@ -7,7 +7,13 @@
 [![checks](https://img.shields.io/github/actions/workflow/status/avalonreset/legends-obs-kit/ci.yml?branch=main&label=checks&style=flat-square&labelColor=000000)](https://github.com/avalonreset/legends-obs-kit/actions/workflows/ci.yml)
 [![license](https://img.shields.io/github/license/avalonreset/legends-obs-kit?label=license&style=flat-square&labelColor=000000&color=666666)](LICENSE)
 
-legends-obs-kit is a guarded, agent-friendly CLI and skill for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
+legends-obs-kit is a guarded, agent-friendly CLI for inspecting, configuring, operating, and proving OBS Studio on Windows. It uses OBS's built-in WebSocket v5 API, local OBS logs, and FFprobe—no ambient MCP server and no UI click macros.
+
+## Agent setup (via `cto-legends`)
+
+Part of the [CTO Legends](https://github.com/avalonreset/cto-legends) ecosystem. `cto-legends` is the only registered skill; this repo vendors a pinned copy at `skills/cto-legends/SKILL.md`.
+
+Install with `cto-legends install legends-obs-kit`, then follow the module recipe the router loads. Do not register this module as its own skill.
 
 Ask your agent to inspect your recording setup, explain what changed since a
 known-good recording, or plan a hardware-appropriate profile. The kit keeps
@@ -42,22 +48,21 @@ Live compatibility was most recently verified with OBS Studio 32.2.2 and obs-web
 
 ## install a release
 
-Download `avalonreset-legends-obs-kit-0.4.1.tgz` and `SHA256SUMS.txt` from
-[v0.4.1](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.4.1).
-Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.4.1.tgz -Algorithm SHA256`
+Download `avalonreset-legends-obs-kit-0.1.0.tgz` and `SHA256SUMS.txt` from
+[v0.1.0](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.1.0).
+Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.1.0.tgz -Algorithm SHA256`
 with the checksum file, then extract into a new directory:
 
 ```powershell
 New-Item -ItemType Directory legends-obs-release
-tar -xzf .\avalonreset-legends-obs-kit-0.4.1.tgz -C .\legends-obs-release
+tar -xzf .\avalonreset-legends-obs-kit-0.1.0.tgz -C .\legends-obs-release
 Set-Location .\legends-obs-release\package
 node .\dist\index.js manifest --pretty
 ```
 
-The release contains compiled commands and the skill; no TypeScript build is
-needed. Keep this directory if you install linked skills from it. To register
-them with supported local agents, run
-`pwsh -NoProfile -File .\bin\setup-multi-agent.ps1`, then follow the first run.
+The release contains compiled commands and the pinned `cto-legends` router
+skill copy; no TypeScript build is needed. Agents reach the kit through the
+one registered `cto-legends` router skill, then follow the first run below.
 
 ## Install from source
 
@@ -68,10 +73,12 @@ corepack enable
 corepack prepare pnpm@10.33.0 --activate
 pnpm install --frozen-lockfile
 pnpm build
-pwsh -NoProfile -File .\bin\setup-multi-agent.ps1
 ```
 
-The installer links the bundled `SKILL.md` into current user-level skill locations for Codex, Claude Code, Gemini CLI, and compatibility locations for other local agents. It refuses to replace folders or links it does not own. The same installer works from a source checkout or an extracted release package with a prebuilt `dist` directory.
+This module ships no per-module skill and no per-host skill installer.
+`cto-legends install legends-obs-kit` previews the install; the CLI runs from
+a source checkout or an extracted release package with a prebuilt `dist`
+directory.
 
 ## First run
 
