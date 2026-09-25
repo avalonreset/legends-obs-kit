@@ -1,0 +1,291 @@
+#define SamplerState sampler_state
+#define Texture2D texture2d
+
+uniform float4x4 ViewProj;
+uniform Texture2D image;
+uniform float width;
+uniform float height;
+uniform float time;
+uniform float mouse_x;
+uniform float mouse_y;
+uniform float filter_mode;
+uniform float visual_mode;
+uniform float shape_mode;
+uniform float radius;
+uniform float thickness;
+uniform float glow;
+uniform float opacity;
+uniform float idle_activity;
+uniform float mode_strength;
+uniform float click_size;
+uniform float click_duration;
+uniform float left_intensity;
+uniform float right_intensity;
+uniform float speed_active;
+uniform float spin_phase;
+uniform float vel_x;
+uniform float vel_y;
+uniform float motion_ticks;
+uniform float tick_count;
+uniform float stretch_strength;
+uniform float wake_strength;
+uniform float trail_strength;
+uniform float trail_duration;
+uniform float shake_amount;
+uniform float finder_size;
+uniform float main_r;
+uniform float main_g;
+uniform float main_b;
+uniform float accent_r;
+uniform float accent_g;
+uniform float accent_b;
+uniform float left_r;
+uniform float left_g;
+uniform float left_b;
+uniform float right_r;
+uniform float right_g;
+uniform float right_b;
+uniform float4 click1;
+uniform float4 click2;
+uniform float4 click3;
+uniform float4 click4;
+uniform float4 click5;
+uniform float4 click6;
+uniform float4 click7;
+uniform float4 click8;
+uniform float4 trail1;
+uniform float4 trail2;
+uniform float4 trail3;
+uniform float4 trail4;
+uniform float4 trail5;
+uniform float4 trail6;
+uniform float4 trail7;
+uniform float4 trail8;
+
+SamplerState textureSampler {
+  Filter = Linear;
+  AddressU = Clamp;
+  AddressV = Clamp;
+};
+
+struct VertIn {
+  float4 pos : POSITION;
+  float2 uv : TEXCOORD0;
+};
+
+struct VertOut {
+  float4 pos : POSITION;
+  float2 uv : TEXCOORD0;
+};
+
+VertOut VSDefault(VertIn v_in)
+{
+  VertOut v_out;
+  v_out.pos = mul(float4(v_in.pos.xyz, 1.0), ViewProj);
+  v_out.uv = v_in.uv;
+  return v_out;
+}
+
+float ring(float d, float r, float w, float aa)
+{
+  return 1.0 - smoothstep(w, w + aa, abs(d - r));
+}
+
+float life(float age, float duration, float power)
+{
+  if (age < 0.0 || age > duration) return 0.0;
+  float t = age / duration;
+  return pow(1.0 - t, power);
+}
+
+float2 velocity_dir()
+{
+  float2 v = float2(vel_x, vel_y);
+  float mag = max(length(v), 0.0001);
+  return v / mag;
+}
+
+float shape_distance(float2 p)
+{
+  if (shape_mode > 0.5 && shape_mode < 1.5) {
+    return (abs(p.x) + abs(p.y)) * 0.7071;
+  }
+  if (shape_mode >= 1.5) {
+    float2 q = abs(p);
+    return pow(pow(q.x, 4.0) + pow(q.y, 4.0), 0.25);
+  }
+  return length(p);
+}
+
+float2 stretch_space(float2 p)
+{
+  float stretch_mode = abs(visual_mode - 3.0) < 0.5 ? 1.0 : 0.0;
+  float amount = stretch_strength * mode_strength * speed_active * stretch_mode;
+  float2 dir = velocity_dir();
+  float along = dot(p, dir);
+  float2 perp = p - dir * along;
+  return dir * (along / (1.0 + amount)) + perp * (1.0 + amount * 0.24);
+}
+
+float spoke_burst(float2 p, float age, float size, float phase, float density)
+{
+  if (age < 0.0 || age > click_duration) return 0.0;
+  float t = age / click_duration;
+  float d = shape_distance(p);
+  float a = atan2(p.y, p.x);
+  float spokes = pow(saturate(sin(a * density + phase) * 0.5 + 0.5), 9.0);
+  float radial = ring(d, radius + size * (0.15 + 0.85 * t), max(thickness * 0.75, 4.0), 4.0);
+  return spokes * radial * pow(1.0 - t, 1.15);
+}
+
+float circle_click(float2 p, float age)
+{
+  if (age < 0.0 || age > click_duration) return 0.0;
+  float t = age / click_duration;
+  float d = shape_distance(p);
+  float r = radius + click_size * t;
+  float ripple = ring(d, r, max(thickness * (0.85 + t), 5.0), 4.0);
+  float flash = life(age, 0.28, 1.7) * (1.0 - smoothstep(0.0, radius * 0.95, d)) * 0.34;
+  return ripple * pow(1.0 - t, 1.22) + flash;
+}
+
+float diamond_click(float2 p, float age)
+{
+  if (age < 0.0 || age > click_duration) return 0.0;
+  float t = age / click_duration;
+  float d = (abs(p.x) + abs(p.y)) * 0.7071;
+  float r = radius * 1.16 + click_size * 0.78 * t;
+  float diamond = ring(d, r, max(thickness * (0.90 + t), 5.0), 5.0);
+  float cross = 1.0 - smoothstep(thickness * 0.55, thickness * 0.55 + 4.0, min(abs(p.x), abs(p.y)));
+  float band = ring(length(p), radius * (1.05 + 0.45 * t), thickness * 1.15, 5.0);
+  float flash = life(age, 0.24, 1.5) * (1.0 - smoothstep(0.0, radius * 0.80, length(p))) * 0.30;
+  return diamond * pow(1.0 - t, 1.08) + cross * band * pow(1.0 - t, 1.2) + flash;
+}
+
+float click_alpha(float2 p, float4 click, out float right_weight)
+{
+  right_weight = click.w > 1.5 ? 1.0 : 0.0;
+  if (click.w <= 0.0 || click.z < 0.0 || click.z > click_duration) return 0.0;
+  float2 q = p - click.xy;
+  float left = circle_click(q, click.z) + spoke_burst(q, click.z, click_size, spin_phase + time * 3.0, 13.0);
+  float right = diamond_click(q, click.z) + spoke_burst(q, click.z, click_size * 0.78, -spin_phase - time * 2.4, 8.0) * 0.75;
+  return lerp(left * left_intensity, right * right_intensity, right_weight);
+}
+
+float rotating_ticks(float2 p, float d)
+{
+  float a = atan2(p.y, p.x);
+  float tick = pow(saturate(sin(a * max(tick_count, 1.0) + spin_phase) * 0.5 + 0.5), 18.0);
+  float momentum_mode = abs(visual_mode - 1.0) < 0.5 ? 1.0 : 0.0;
+  float base = 0.18 * idle_activity + speed_active * motion_ticks * (0.50 + momentum_mode * 0.80);
+  float band = ring(d, radius * (1.16 + speed_active * 0.24), max(thickness * 0.55, 3.0), 3.0);
+  return tick * band * base * mode_strength;
+}
+
+float wake_mark(float2 p)
+{
+  float2 dir = velocity_dir();
+  float behind = max(0.0, -dot(p, dir));
+  float side = abs(dot(p, float2(-dir.y, dir.x)));
+  float body = 1.0 - smoothstep(radius * 0.35, radius * (1.6 + speed_active), behind);
+  float narrow = 1.0 - smoothstep(thickness * 1.4, thickness * 1.4 + radius * 0.22, side);
+  return body * narrow * speed_active * wake_strength * mode_strength;
+}
+
+float trail_mark(float2 p, float4 item)
+{
+  if (item.w <= 0.0 || item.z < 0.0 || item.z > trail_duration) return 0.0;
+  float comet_mode = abs(visual_mode - 2.0) < 0.5 ? 1.0 : 0.0;
+  float stretch_mode = abs(visual_mode - 3.0) < 0.5 ? 0.35 : 0.0;
+  float t = item.z / max(trail_duration, 0.001);
+  float2 q = p - item.xy;
+  float d = shape_distance(q);
+  float local_radius = radius * (0.68 + item.w * 0.30);
+  float mark = ring(d, local_radius, max(thickness * 0.50, 3.0), 4.0);
+  return mark * pow(1.0 - t, 1.35) * item.w * trail_strength * mode_strength * max(comet_mode, stretch_mode);
+}
+
+float finder_rings(float d)
+{
+  float manual = abs(visual_mode - 4.0) < 0.5 ? speed_active * 0.26 : 0.0;
+  float finder = max(shake_amount, manual) * mode_strength;
+  float scaled = radius * lerp(1.0, finder_size, saturate(finder));
+  float outer1 = ring(d, scaled, max(thickness * 0.78, 4.0), 5.0);
+  float outer2 = ring(d, scaled * 1.34 + sin(time * 7.0) * 9.0, max(thickness * 0.45, 3.0), 6.0);
+  return (outer1 * 0.70 + outer2 * 0.38) * saturate(finder);
+}
+
+float4 PSDefault(VertOut v_in) : TARGET
+{
+  float2 p = v_in.uv * float2(width, height);
+  float2 m = float2(mouse_x, mouse_y);
+  float2 local_p = p - m;
+  float2 shaped_p = stretch_space(local_p);
+  float d = shape_distance(shaped_p);
+
+  float finder = max(shake_amount, abs(visual_mode - 4.0) < 0.5 ? speed_active * 0.22 : 0.0) * mode_strength;
+  float pulse = 1.0 + sin(time * 4.6) * idle_activity * 0.12;
+  float r = radius * pulse * lerp(1.0, finder_size, saturate(finder) * 0.35);
+
+  float halo = ring(d, r, thickness, 2.0);
+  float haze = (1.0 - smoothstep(r, r + glow, d)) * 0.34;
+  float inner = (1.0 - smoothstep(r - thickness * 0.35, r, d)) * 0.10;
+  float ticks = rotating_ticks(shaped_p, d);
+  float wake = wake_mark(local_p) * (abs(visual_mode) < 0.5 ? 0.20 : 1.0);
+
+  float trail = 0.0;
+  trail += trail_mark(p, trail1);
+  trail += trail_mark(p, trail2);
+  trail += trail_mark(p, trail3);
+  trail += trail_mark(p, trail4);
+  trail += trail_mark(p, trail5);
+  trail += trail_mark(p, trail6);
+  trail += trail_mark(p, trail7);
+  trail += trail_mark(p, trail8);
+  trail = saturate(trail);
+
+  float right_mix = 0.0;
+  float rm = 0.0;
+  float ca = 0.0;
+  float a = 0.0;
+  a = click_alpha(p, click1, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click2, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click3, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click4, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click5, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click6, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click7, rm); ca += a; right_mix += a * rm;
+  a = click_alpha(p, click8, rm); ca += a; right_mix += a * rm;
+  ca = saturate(ca);
+  right_mix = ca > 0.001 ? saturate(right_mix / ca) : 0.0;
+
+  float finder_energy = finder_rings(d);
+  float3 main_color = float3(main_r, main_g, main_b);
+  float3 accent_color = float3(accent_r, accent_g, accent_b);
+  float3 left_color = float3(left_r, left_g, left_b);
+  float3 right_color = float3(right_r, right_g, right_b);
+  float3 click_color = lerp(left_color, right_color, right_mix);
+
+  float base_energy = halo + haze + inner + ticks;
+  float accent_energy = trail + wake + finder_energy;
+  float main_a = saturate(base_energy * opacity);
+  float accent_a = saturate(accent_energy * opacity);
+  float click_a = saturate(ca * opacity);
+  float3 rgb = main_color * main_a + accent_color * accent_a + click_color * click_a;
+  float out_a = saturate(main_a + accent_a + click_a);
+  if (filter_mode > 0.5) {
+    float4 base = image.Sample(textureSampler, v_in.uv);
+    return float4(saturate(base.rgb * 0.0 + rgb * out_a), out_a);
+  }
+  return float4(rgb, out_a);
+}
+
+technique Draw
+{
+  pass
+  {
+    vertex_shader = VSDefault(v_in);
+    pixel_shader = PSDefault(v_in);
+  }
+}
+
