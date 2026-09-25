@@ -121,6 +121,10 @@ New installs store machine audits, rollback snapshots, and receipts under `%LOCA
 
 See [First run](docs/FIRST-RUN.md), [Recipes](docs/RECIPES.md), [Safety](docs/SAFETY.md), [Agent compatibility](docs/AGENTS-MATRIX.md), and [Audit ledger](docs/AUDIT-LEDGER.md).
 
+## Optional extra: animated cursor overlay
+
+ carries the Legends Cursor Filter: halo, momentum ticks, click ripples, comet trail, glow. Windows only, fully optional. See . That extra is GPL-2.0-or-later and separable; the kit stays MIT.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
