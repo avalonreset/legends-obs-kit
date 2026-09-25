@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- Adopt the former standalone cursor overlay as optional extra `extras/cursor/` (filter Lua, shader, installer, readme).
+- The extra stays GPL-2.0-or-later with its own LICENSE; the kit remains MIT.
+
 ## 0.4.0 — 2026-09-04
 
 - Prepared the repository as an MIT-licensed public release candidate with repository metadata, security guidance, contribution guidance, and Windows CI.
