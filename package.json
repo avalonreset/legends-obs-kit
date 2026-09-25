@@ -42,7 +42,8 @@
     "LICENSE",
     "LEGENDS.md",
     "README.md",
-    "SECURITY.md"
+    "SECURITY.md",
+    "extras/cursor"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
