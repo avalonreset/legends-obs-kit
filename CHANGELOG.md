@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 - 2026-09-25
+
+- Prebuilt release artifact generation: attach the `npm pack` tarball to the GitHub release so catalog installs resolve a verified `artifact_url` with `dist/index.js` plus its runtime needs.
+
 ## 0.1.0 - 2026-09-25
 
 - Router-native reset generation: de-skillified to the single registered `cto-legends` router skill (vendored pinned copy at `skills/cto-legends/SKILL.md`, router commit `6975dcb`).

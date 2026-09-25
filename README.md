@@ -48,14 +48,14 @@ Live compatibility was most recently verified with OBS Studio 32.2.2 and obs-web
 
 ## install a release
 
-Download `avalonreset-legends-obs-kit-0.1.0.tgz` and `SHA256SUMS.txt` from
-[v0.1.0](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.1.0).
-Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.1.0.tgz -Algorithm SHA256`
+Download `avalonreset-legends-obs-kit-0.1.1.tgz` and `SHA256SUMS.txt` from
+[v0.1.1](https://github.com/avalonreset/legends-obs-kit/releases/tag/v0.1.1).
+Compare `Get-FileHash .\avalonreset-legends-obs-kit-0.1.1.tgz -Algorithm SHA256`
 with the checksum file, then extract into a new directory:
 
 ```powershell
 New-Item -ItemType Directory legends-obs-release
-tar -xzf .\avalonreset-legends-obs-kit-0.1.0.tgz -C .\legends-obs-release
+tar -xzf .\avalonreset-legends-obs-kit-0.1.1.tgz -C .\legends-obs-release
 Set-Location .\legends-obs-release\package
 node .\dist\index.js manifest --pretty
 ```
